@@ -33,15 +33,33 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function takePhoto() {
-  const video = document.getElementById("video");
-  if (!video.videoWidth || !video.videoHeight) return;
-
+function takePhoto(video) {
   const canvas = document.createElement("canvas");
+  
+  // รักษา aspect ratio ของ video
+  const videoRatio = video.videoWidth / video.videoHeight;
+  const targetRatio = captureWidth / captureHeight;
+  
+  let drawWidth, drawHeight, offsetX=0, offsetY=0;
+  
+  if(videoRatio > targetRatio){
+    // video กว้างกว่า canvas → crop ซ้ายขวา
+    drawHeight = video.videoHeight;
+    drawWidth = drawHeight * targetRatio;
+    offsetX = (video.videoWidth - drawWidth)/2;
+    offsetY = 0;
+  } else {
+    // video สูงกว่า canvas → crop บนล่าง
+    drawWidth = video.videoWidth;
+    drawHeight = drawWidth / targetRatio;
+    offsetX = 0;
+    offsetY = (video.videoHeight - drawHeight)/2;
+  }
+  
   canvas.width = captureWidth;
   canvas.height = captureHeight;
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight, 0, 0, captureWidth, captureHeight);
 
   const imgData = canvas.toDataURL("image/jpeg", 1.0);
   const a = document.createElement("a");
@@ -67,23 +85,27 @@ async function startTracking() {
   document.getElementById("totalDistance").textContent = totalDistance;
   document.getElementById("photoCount").textContent = photoCount;
 
+  const video = document.getElementById("video");
+
   if (navigator.geolocation) {
     watchId = navigator.geolocation.watchPosition(pos => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
+
       if (lastLat !== null && lastLon !== null) {
         const dist = haversine(lastLat, lastLon, lat, lon);
         totalDistance += dist;
         document.getElementById("totalDistance").textContent = Math.round(totalDistance);
+        
         if (dist >= distanceThreshold) {
-          takePhoto();
-          lastLat = lat;
-          lastLon = lon;
+          takePhoto(video);
         }
-      } else {
-        lastLat = lat;
-        lastLon = lon;
       }
+
+      // อัปเดต lastLat/lastLon ทุกครั้ง
+      lastLat = lat;
+      lastLon = lon;
+
     }, err => alert("GPS error: " + err.message), { enableHighAccuracy: true });
   } else {
     alert("เบราว์เซอร์นี้ไม่รองรับ GPS");
