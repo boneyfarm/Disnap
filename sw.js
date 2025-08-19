@@ -1,6 +1,16 @@
-self.addEventListener("install", e => {
-  console.log("Service Worker installed");
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open('distancesnap-v1').then(cache => cache.addAll([
+      '/',
+      '/index.html',
+      '/script.js',
+      '/manifest.json'
+    ]))
+  );
 });
-self.addEventListener("fetch", e => {
-  // ทำให้โหลด offline ได้ (optional)
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(resp => resp || fetch(e.request))
+  );
 });
