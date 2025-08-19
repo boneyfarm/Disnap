@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DistanceSnap Web</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    video { width: 100%; max-width: 400px; border: 1px solid #ccc; }
+    #log { white-space: pre-line; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>DistanceSnap (Web)</h1>
+  <label>
+    ระยะถ่ายภาพ (เมตร):
+    <input id="interval" type="number" value="20" min="1">
+  </label>
+  <br><br>
+  <button id="startBtn">Start</button>
+  <button id="stopBtn">Stop</button>
+  <br><br>
+  <video id="preview" autoplay playsinline></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <div id="log"></div>
+
+  <script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(() => console.log("SW registered"));
+    }
+  </script>
+</body>
+</html>
