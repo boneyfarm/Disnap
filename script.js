@@ -1,69 +1,80 @@
-let watchId, mediaStream;
-let lastPos = null;
-let cumDistance = 0;
-let intervalMeters = 20;
-let running = false;
+let watchId;
+let lastLat = null, lastLon = null;
+let distanceThreshold = 10;
+let videoStream;
 
-const log = (msg) => {
-  document.getElementById('log').textContent += msg + "\n";
-};
+async function initCamera() {
+  const constraints = {
+    video: {
+      facingMode: "environment",
+      width: { ideal: 1920 },
+      height: { ideal: 1080 }
+    },
+    audio: false
+  };
 
-function distanceBetween(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const toRad = d => d * Math.PI / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return R * 2 * Math.asin(Math.sqrt(a));
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const video = document.getElementById("video");
+    video.srcObject = stream;
+
+    await new Promise(resolve => {
+      video.onloadedmetadata = () => resolve();
+    });
+
+    videoStream = stream;
+  } catch (err) {
+    console.error("Camera init error:", err);
+  }
 }
 
-async function start() {
-  intervalMeters = parseFloat(document.getElementById('interval').value) || 20;
-  log("Start tracking every " + intervalMeters + " m");
-
-  mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-  document.getElementById('preview').srcObject = mediaStream;
-
-  watchId = navigator.geolocation.watchPosition(pos => {
-    const { latitude, longitude, accuracy } = pos.coords;
-    if (accuracy > 30) return;
-    if (lastPos) {
-      const step = distanceBetween(lastPos.lat, lastPos.lon, latitude, longitude);
-      cumDistance += step;
-      if (cumDistance >= intervalMeters) {
-        cumDistance = 0;
-        capture();
-      }
-    }
-    lastPos = { lat: latitude, lon: longitude };
-  }, err => log("GPS error: " + err.message), { enableHighAccuracy: true });
-  running = true;
+function haversine(lat1, lon1, lat2, lon2) {
+  function toRad(x) { return x * Math.PI / 180; }
+  const R = 6371e3;
+  const φ1 = toRad(lat1), φ2 = toRad(lat2);
+  const Δφ = toRad(lat2 - lat1);
+  const Δλ = toRad(lon2 - lon1);
+  const a = Math.sin(Δφ / 2) ** 2 +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
-function stop() {
-  if (watchId) navigator.geolocation.clearWatch(watchId);
-  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-  running = false;
-  log("Stopped");
-}
-
-function capture() {
-  const video = document.getElementById('preview');
-  const canvas = document.getElementById('canvas');
+function takePhoto() {
+  const video = document.getElementById("video");
+  const canvas = document.createElement("canvas");
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0);
-  canvas.toBlob(blob => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'snap_' + Date.now() + '.jpg';
-    a.click();
-    URL.revokeObjectURL(url);
-    log("Captured photo");
-  }, 'image/jpeg', 0.9);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const imgData = canvas.toDataURL("image/jpeg", 1.0);
+
+  const a = document.createElement("a");
+  a.href = imgData;
+  a.download = "photo_" + Date.now() + ".jpg";
+  a.click();
 }
 
-document.getElementById('startBtn').onclick = () => { if (!running) start(); };
-document.getElementById('stopBtn').onclick = stop;
+function startTracking() {
+  distanceThreshold = parseFloat(document.getElementById("distanceInput").value);
+  if (navigator.geolocation) {
+    watchId = navigator.geolocation.watchPosition(pos => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      if (lastLat !== null && lastLon !== null) {
+        const dist = haversine(lastLat, lastLon, lat, lon);
+        if (dist >= distanceThreshold) {
+          takePhoto();
+          lastLat = lat;
+          lastLon = lon;
+        }
+      } else {
+        lastLat = lat;
+        lastLon = lon;
+      }
+    }, err => console.error(err), { enableHighAccuracy: true });
+  }
+}
+
+window.onload = initCamera;

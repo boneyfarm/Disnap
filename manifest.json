@@ -1,20 +1,12 @@
 {
-  "name": "DistanceSnap Web",
-  "short_name": "DistanceSnap",
-  "start_url": "./index.html",
+  "name": "Distance Snap",
+  "short_name": "Snap",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "description": "ถ่ายรูปอัตโนมัติตามระยะทางด้วย GPS",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
