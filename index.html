@@ -19,6 +19,13 @@
   </select><br><br>
 
   <button onclick="startTracking()">Start</button>
+  <button onclick="stopTracking()">Stop</button><br><br>
+
+  <div>
+    <span>ระยะทางรวม: <span id="totalDistance">0</span> เมตร</span><br>
+    <span>จำนวนรูปที่ถ่าย: <span id="photoCount">0</span></span>
+  </div><br>
+
   <video id="video" autoplay playsinline style="width: 100%; max-width: 400px;"></video>
 
   <script src="script.js"></script>

@@ -1,8 +1,10 @@
-let watchId;
+let watchId = null;
 let lastLat = null, lastLon = null;
 let distanceThreshold = 10;
-let videoStream;
+let videoStream = null;
 let captureWidth = 1600, captureHeight = 1200;
+let totalDistance = 0;
+let photoCount = 0;
 
 async function initCamera() {
   const video = document.getElementById("video");
@@ -46,25 +48,33 @@ function takePhoto() {
   a.href = imgData;
   a.download = "photo_" + Date.now() + ".jpg";
   a.click();
+
+  photoCount++;
+  document.getElementById("photoCount").textContent = photoCount;
 }
 
 async function startTracking() {
   distanceThreshold = parseFloat(document.getElementById("distanceInput").value);
-  
-  // เลือกความละเอียดจาก dropdown
   const resValue = document.getElementById("resolutionSelect").value;
   [captureWidth, captureHeight] = resValue.split("x").map(Number);
 
-  // เริ่มกล้อง
   await initCamera();
 
-  // เริ่ม GPS
+  lastLat = null;
+  lastLon = null;
+  totalDistance = 0;
+  photoCount = 0;
+  document.getElementById("totalDistance").textContent = totalDistance;
+  document.getElementById("photoCount").textContent = photoCount;
+
   if (navigator.geolocation) {
     watchId = navigator.geolocation.watchPosition(pos => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
       if (lastLat !== null && lastLon !== null) {
         const dist = haversine(lastLat, lastLon, lat, lon);
+        totalDistance += dist;
+        document.getElementById("totalDistance").textContent = Math.round(totalDistance);
         if (dist >= distanceThreshold) {
           takePhoto();
           lastLat = lat;
@@ -78,4 +88,18 @@ async function startTracking() {
   } else {
     alert("เบราว์เซอร์นี้ไม่รองรับ GPS");
   }
+}
+
+function stopTracking() {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => track.stop());
+    videoStream = null;
+  }
+  lastLat = null;
+  lastLon = null;
+  alert("หยุดการถ่ายรูปเรียบร้อยแล้ว");
 }
