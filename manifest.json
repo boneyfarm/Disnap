@@ -4,9 +4,6 @@
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
-  "description": "ถ่ายรูปอัตโนมัติตามระยะทางด้วย GPS",
-  "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+  "description": "ถ่ายภาพอัตโนมัติตามระยะทาง",
+  "icons": []
 }

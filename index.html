@@ -7,12 +7,10 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <h1>Distance Snap Web App</h1>
-  <video id="video" autoplay playsinline style="max-width:100%; border:1px solid #ccc;"></video>
-  <div>
-    <label>ถ่ายภาพทุก: <input type="number" id="distanceInput" value="10"> เมตร</label>
-    <button onclick="startTracking()">Start</button>
-  </div>
+  <h1>Distance Snap</h1>
+  <label>ถ่ายภาพทุก (เมตร): <input type="number" id="distanceInput" value="10"></label>
+  <button onclick="startTracking()">Start</button>
+  <video id="video" autoplay playsinline style="width:100%; max-width:400px;"></video>
   <script src="script.js"></script>
 </body>
 </html>
