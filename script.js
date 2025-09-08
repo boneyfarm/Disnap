@@ -1,6 +1,6 @@
 let watchId = null;
 let lastLat = null, lastLon = null;
-let distanceThreshold = 10;
+let distanceThreshold = 50;
 let videoStream = null;
 let captureWidth = 1600, captureHeight = 1200;
 let totalDistance = 0;
@@ -106,30 +106,31 @@ async function startTracking() {
     watchId = navigator.geolocation.watchPosition(pos => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
-      log("📍 GPS update: " + lat + ", " + lon);
+      const acc = pos.coords.accuracy; // ความแม่นยำ (เมตร)
+
+      log(`📍 GPS update: ${lat}, ${lon} (accuracy ~${acc.toFixed(1)} m)`);
 
       if (lastLat !== null && lastLon !== null) {
         const dist = haversine(lastLat, lastLon, lat, lon);
         totalDistance += dist;
         distanceSinceLastPhoto += dist;
 
-        log("➕ Distance moved: " + dist.toFixed(2) + " m | Total: " + totalDistance.toFixed(2));
+        log(`➕ Moved: ${dist.toFixed(2)} m | Total: ${totalDistance.toFixed(2)} | Since last: ${distanceSinceLastPhoto.toFixed(2)}`);
 
         document.getElementById("totalDistance").textContent = Math.round(totalDistance);
 
         if (distanceSinceLastPhoto >= distanceThreshold) {
-          log("🎯 Threshold reached, taking photo...");
+          log("🎯 Threshold reached → taking photo...");
           takePhoto(video);
         }
       }
 
       lastLat = lat;
       lastLon = lon;
-
     }, err => {
       alert("GPS error: " + err.message);
       log("❌ GPS error: " + err.message);
-    }, { enableHighAccuracy: true });
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
   } else {
     alert("เบราว์เซอร์นี้ไม่รองรับ GPS");
     log("❌ No geolocation support");
