@@ -5,6 +5,7 @@ let videoStream = null;
 let captureWidth = 1600, captureHeight = 1200;
 let totalDistance = 0;
 let photoCount = 0;
+let distanceSinceLastPhoto = 0;
 
 async function initCamera() {
   const video = document.getElementById("video");
@@ -36,23 +37,18 @@ function haversine(lat1, lon1, lat2, lon2) {
 function takePhoto(video) {
   const canvas = document.createElement("canvas");
   
-  // รักษา aspect ratio ของ video
   const videoRatio = video.videoWidth / video.videoHeight;
   const targetRatio = captureWidth / captureHeight;
   
   let drawWidth, drawHeight, offsetX=0, offsetY=0;
   
   if(videoRatio > targetRatio){
-    // video กว้างกว่า canvas → crop ซ้ายขวา
     drawHeight = video.videoHeight;
     drawWidth = drawHeight * targetRatio;
     offsetX = (video.videoWidth - drawWidth)/2;
-    offsetY = 0;
   } else {
-    // video สูงกว่า canvas → crop บนล่าง
     drawWidth = video.videoWidth;
     drawHeight = drawWidth / targetRatio;
-    offsetX = 0;
     offsetY = (video.videoHeight - drawHeight)/2;
   }
   
@@ -69,6 +65,9 @@ function takePhoto(video) {
 
   photoCount++;
   document.getElementById("photoCount").textContent = photoCount;
+
+  // reset ระยะตั้งแต่ถ่ายครั้งล่าสุด
+  distanceSinceLastPhoto = 0;
 }
 
 async function startTracking() {
@@ -82,6 +81,7 @@ async function startTracking() {
   lastLon = null;
   totalDistance = 0;
   photoCount = 0;
+  distanceSinceLastPhoto = 0;
   document.getElementById("totalDistance").textContent = totalDistance;
   document.getElementById("photoCount").textContent = photoCount;
 
@@ -95,14 +95,15 @@ async function startTracking() {
       if (lastLat !== null && lastLon !== null) {
         const dist = haversine(lastLat, lastLon, lat, lon);
         totalDistance += dist;
+        distanceSinceLastPhoto += dist;
+
         document.getElementById("totalDistance").textContent = Math.round(totalDistance);
-        
-        if (dist >= distanceThreshold) {
+
+        if (distanceSinceLastPhoto >= distanceThreshold) {
           takePhoto(video);
         }
       }
 
-      // อัปเดต lastLat/lastLon ทุกครั้ง
       lastLat = lat;
       lastLon = lon;
 
@@ -123,5 +124,6 @@ function stopTracking() {
   }
   lastLat = null;
   lastLon = null;
+  distanceSinceLastPhoto = 0;
   alert("หยุดการถ่ายรูปเรียบร้อยแล้ว");
 }
