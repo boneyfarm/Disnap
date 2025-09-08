@@ -7,6 +7,14 @@ let totalDistance = 0;
 let photoCount = 0;
 let distanceSinceLastPhoto = 0;
 
+// ฟังก์ชัน log ที่โชว์ทั้ง console และหน้าเว็บ
+function log(msg) {
+  console.log(msg);
+  const logBox = document.getElementById("log");
+  logBox.textContent += msg + "\n";
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
 async function initCamera() {
   const video = document.getElementById("video");
   try {
@@ -17,9 +25,10 @@ async function initCamera() {
     video.srcObject = stream;
     await video.play();
     videoStream = stream;
-    console.log("Camera started!");
+    log("✅ Camera started!");
   } catch (err) {
     alert("ไม่สามารถเปิดกล้องได้: " + err.message);
+    log("❌ Camera error: " + err.message);
   }
 }
 
@@ -35,6 +44,11 @@ function haversine(lat1, lon1, lat2, lon2) {
 }
 
 function takePhoto(video) {
+  if (!video.videoWidth || !video.videoHeight) {
+    log("⚠️ Video not ready yet, skip photo");
+    return;
+  }
+
   const canvas = document.createElement("canvas");
   
   const videoRatio = video.videoWidth / video.videoHeight;
@@ -65,8 +79,8 @@ function takePhoto(video) {
 
   photoCount++;
   document.getElementById("photoCount").textContent = photoCount;
+  log("📸 Photo taken, count = " + photoCount);
 
-  // reset ระยะตั้งแต่ถ่ายครั้งล่าสุด
   distanceSinceLastPhoto = 0;
 }
 
@@ -84,6 +98,7 @@ async function startTracking() {
   distanceSinceLastPhoto = 0;
   document.getElementById("totalDistance").textContent = totalDistance;
   document.getElementById("photoCount").textContent = photoCount;
+  document.getElementById("log").textContent = ""; // reset log
 
   const video = document.getElementById("video");
 
@@ -91,15 +106,19 @@ async function startTracking() {
     watchId = navigator.geolocation.watchPosition(pos => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
+      log("📍 GPS update: " + lat + ", " + lon);
 
       if (lastLat !== null && lastLon !== null) {
         const dist = haversine(lastLat, lastLon, lat, lon);
         totalDistance += dist;
         distanceSinceLastPhoto += dist;
 
+        log("➕ Distance moved: " + dist.toFixed(2) + " m | Total: " + totalDistance.toFixed(2));
+
         document.getElementById("totalDistance").textContent = Math.round(totalDistance);
 
         if (distanceSinceLastPhoto >= distanceThreshold) {
+          log("🎯 Threshold reached, taking photo...");
           takePhoto(video);
         }
       }
@@ -107,9 +126,13 @@ async function startTracking() {
       lastLat = lat;
       lastLon = lon;
 
-    }, err => alert("GPS error: " + err.message), { enableHighAccuracy: true });
+    }, err => {
+      alert("GPS error: " + err.message);
+      log("❌ GPS error: " + err.message);
+    }, { enableHighAccuracy: true });
   } else {
     alert("เบราว์เซอร์นี้ไม่รองรับ GPS");
+    log("❌ No geolocation support");
   }
 }
 
@@ -126,4 +149,11 @@ function stopTracking() {
   lastLon = null;
   distanceSinceLastPhoto = 0;
   alert("หยุดการถ่ายรูปเรียบร้อยแล้ว");
+  log("🛑 Tracking stopped");
+}
+
+function manualPhoto() {
+  const video = document.getElementById("video");
+  log("📸 Manual photo button pressed");
+  takePhoto(video);
 }

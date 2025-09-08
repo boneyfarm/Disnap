@@ -2,11 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Distance Snap</title>
+  <title>Distance Snap Debug</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    #log {
+      background: #111;
+      color: #0f0;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 5px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
 <body>
-  <h2>📸 DistanceSnap</h2>
+  <h2>📸 DistanceSnap (Debug Version)</h2>
 
   <label>ถ่ายทุกระยะ (เมตร):</label>
   <input type="number" id="distanceInput" value="10"><br><br>
@@ -19,14 +31,18 @@
   </select><br><br>
 
   <button onclick="startTracking()">Start</button>
-  <button onclick="stopTracking()">Stop</button><br><br>
+  <button onclick="stopTracking()">Stop</button>
+  <button onclick="manualPhoto()">📷 Take Photo Now</button><br><br>
 
   <div>
     <span>ระยะทางรวม: <span id="totalDistance">0</span> เมตร</span><br>
     <span>จำนวนรูปที่ถ่าย: <span id="photoCount">0</span></span>
   </div><br>
 
-  <video id="video" autoplay playsinline style="width: 100%; max-width: 400px;"></video>
+  <video id="video" autoplay playsinline style="width: 100%; max-width: 400px; background: #000;"></video>
+
+  <h3>Debug Log</h3>
+  <div id="log"></div>
 
   <script src="script.js"></script>
 </body>
